@@ -2,12 +2,17 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/pool');
+const authMiddleware = require('../middleware/auth');
+
+router.use(authMiddleware); // is file ke saare routes login zaroori karte hain
 
 // Create a new customer
 router.post('/', async (req, res) => {
-  const { user_id, name, phone } = req.body;
-  if (!user_id || !name) {
-    return res.status(400).json({ error: 'user_id aur name required hain' });
+  const { name, phone } = req.body;
+  const user_id = req.user.id;
+
+  if (!name) {
+    return res.status(400).json({ error: 'name required hai' });
   }
   try {
     const result = await pool.query(
@@ -21,10 +26,9 @@ router.post('/', async (req, res) => {
   }
 });
 
-// List all customers for a user, with computed balance
+// List all customers for the logged-in user, with computed balance
 router.get('/', async (req, res) => {
-  const { user_id } = req.query;
-  if (!user_id) return res.status(400).json({ error: 'user_id required hai' });
+  const user_id = req.user.id;
 
   try {
     const result = await pool.query(
