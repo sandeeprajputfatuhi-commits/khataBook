@@ -22,7 +22,7 @@ router.get('/rates', async (req, res) => {
   const params = new URLSearchParams({
     'api-key': apiKey,
     format: 'json',
-    limit: '100',
+    limit: '300',
   });
 
   if (state) params.append('filters[state.keyword]', state);
