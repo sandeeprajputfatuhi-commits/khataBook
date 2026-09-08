@@ -50,4 +50,31 @@ router.get('/', async (req, res) => {
   }
 });
 
+// List customers who owe money and haven't had activity in `days` days or more.
+// This is the "who needs a reminder" list - the app finds them, you just tap send.
+router.get('/reminders', async (req, res) => {
+  const user_id = req.user.id;
+  const days = parseInt(req.query.days, 10) || 7;
+
+  try {
+    const result = await pool.query(
+      `SELECT c.id, c.name, c.phone,
+              COALESCE(SUM(CASE WHEN e.type = 'debit' THEN e.amount ELSE -e.amount END), 0) AS balance,
+              MAX(e.created_at) AS last_activity
+       FROM customers c
+       JOIN entries e ON e.customer_id = c.id
+       WHERE c.user_id = $1
+       GROUP BY c.id
+       HAVING COALESCE(SUM(CASE WHEN e.type = 'debit' THEN e.amount ELSE -e.amount END), 0) > 0
+          AND MAX(e.created_at) < NOW() - ($2 || ' days')::interval
+       ORDER BY balance DESC`,
+      [user_id, days]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;
