@@ -47,5 +47,26 @@ CREATE TABLE IF NOT EXISTS group_members (
 
 -- Phase 2 (mandi bhav + reminders) will add more tables later.
 
+-- Push notification support: one row per device that has registered
+CREATE TABLE IF NOT EXISTS push_tokens (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  expo_push_token TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, expo_push_token)
+);
+
+-- Commodities a user wants price-change alerts for
+CREATE TABLE IF NOT EXISTS tracked_commodities (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  commodity VARCHAR(100) NOT NULL,
+  state VARCHAR(100),
+  district VARCHAR(100),
+  last_price NUMERIC(10,2),
+  last_checked TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
 CREATE INDEX IF NOT EXISTS idx_customers_user ON customers(user_id);
 CREATE INDEX IF NOT EXISTS idx_entries_customer ON entries(customer_id);
